@@ -292,8 +292,8 @@ header h1 {
 
 /* 🔹 Chat Window */
 #chat-window {
-    width: 95%;
-    max-width: 800px;
+    width: 90%;
+    max-width: 700px;
     background: linear-gradient(165deg, #1a1a2e 0%, #16213e 70%, #1e2a4a 100%);
     position: relative;
     overflow: hidden;
