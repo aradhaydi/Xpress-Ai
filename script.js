@@ -14,12 +14,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // ✅ Get API key from Vercel environment
     async function getAPIKey() {
-        const response = await fetch("AIzaSyBOJI4akLHLRfappP3BqdXOdiqbajPhOIc");
+    try {
+        const response = await fetch("/api/get-key");
+        if (!response.ok) throw new Error("Failed to fetch API key");
         const data = await response.json();
         return data.apiKey;
+    } catch (error) {
+        console.error("Error fetching API key:", error);
+        return null; // Return null if fetching fails
     }
-
-    // ✅ Send user message and get AI response
+    }
+     // ✅ Send user message and get AI response
     async function sendMessage() {
         let message = userInput.value.trim();
         if (message === "") return;
