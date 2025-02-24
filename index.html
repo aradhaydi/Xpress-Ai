@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chatbot</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Header with Hamburger Menu -->
+    <header>
+        <button id="menu-btn">☰</button>
+        <h1>AI Chatbot</h1>
+    </header>
+
+    <!-- Sidebar Menu -->
+    <nav id="sidebar">
+        <ul>
+            <li><button id="new-chat">New Chat</button></li>
+            <li><a href="#">Settings</a></li>
+            <li><a href="#">Help</a></li>
+            <li><a href="#">About</a></li>
+        </ul>
+    </nav>
+
+    <!-- Chat History Section -->
+    <section id="chat-history">
+        <h2></h2>
+        <ul id="history-list">
+            <!-- Old chats will be listed here -->
+        </ul>
+    </section>
+
+    <!-- Chat Window -->
+    <main id="chat-window">
+        <div id="chat-box">
+            <!-- Chat messages will appear here -->
+        </div>
+
+        <!-- User Input -->
+        <div id="input-area">
+            <input id="user-input" type="text" placeholder="Type a message..." />
+            <button id="send-btn">Send</button>
+        </div>
+    </main>
+  <script src="script.js"></script>
+</body>
+</html>
