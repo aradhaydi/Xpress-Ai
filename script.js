@@ -3,6 +3,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const userInput = document.getElementById("user-input");
     const chatBox = document.getElementById("chat-box");
     const newChatBtn = document.getElementById("new-chat");
+    const historyList = document.getElementById("history-list");
+    
+    let currentChatId = Date.now().toString();
+    let chats = JSON.parse(localStorage.getItem('chats') || '{}');
 
     const menuBtn = document.getElementById("menu-btn");
     const sidebar = document.getElementById("sidebar");
@@ -10,7 +14,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // ✅ Get API key from Vercel environment
     async function getAPIKey() {
-        const response = await fetch("/api/get-key");
+        const response = await fetch("AIzaSyBOJI4akLHLRfappP3BqdXOdiqbajPhOIc");
         const data = await response.json();
         return data.apiKey;
     }
@@ -21,11 +25,22 @@ document.addEventListener("DOMContentLoaded", function () {
         if (message === "") return;
 
         addMessage("You", message, "user-message");
-
         userInput.value = "";
         userInput.disabled = true;
 
+        // Add loading animation
+        const loadingBubble = document.createElement("div");
+        loadingBubble.className = "loading-bubble";
+        loadingBubble.innerHTML = `
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+        `;
+        chatBox.appendChild(loadingBubble);
+        chatBox.scrollTop = chatBox.scrollHeight;
+
         let botReply = await getBotResponse(message);
+        chatBox.removeChild(loadingBubble);
         addMessage("AI", botReply, "bot-message");
 
         userInput.disabled = false;
@@ -50,19 +65,55 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // ✅ Add message to chat
-    function addMessage(sender, text, className) {
+    function addMessage(sender, text, className, save = true) {
         const messageElement = document.createElement("div");
         messageElement.classList.add(className);
         messageElement.innerHTML = `<strong>${sender}:</strong><br>${text}`;
         chatBox.appendChild(messageElement);
         chatBox.scrollTop = chatBox.scrollHeight;
+
+        if (save) {
+            if (!chats[currentChatId]) {
+                chats[currentChatId] = {
+                    title: text.slice(0, 30) + "...",
+                    messages: []
+                };
+                updateHistoryList();
+            }
+            chats[currentChatId].messages.push({sender, text, className});
+            localStorage.setItem('chats', JSON.stringify(chats));
+        }
+    }
+
+    function updateHistoryList() {
+        historyList.innerHTML = '';
+        Object.entries(chats).forEach(([id, chat]) => {
+            const li = document.createElement('li');
+            li.innerHTML = `<button class="history-item">${chat.title}</button>`;
+            li.querySelector('button').addEventListener('click', () => loadChat(id));
+            historyList.appendChild(li);
+        });
+    }
+
+    function loadChat(chatId) {
+        currentChatId = chatId;
+        chatBox.innerHTML = '';
+        chats[chatId].messages.forEach(msg => {
+            addMessage(msg.sender, msg.text, msg.className, false);
+        });
+        document.getElementById('sidebar').classList.remove('sidebar-open');
     }
 
     // ✅ Format AI response (bold, spacing, paragraphs)
     function formatAIResponse(text) {
         return text
-            .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") // **bold**
-            .replace(/\n/g, "<br>"); // Line breaks
+            .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") // Bold text
+            .replace(/^[-*]\s(.+)$/gm, "<li>$1</li>") // Bullet points
+            .replace(/(?:^|\n)([^\n]+)\n/g, "<p>$1</p>") // Paragraphs
+            .replace(/`([^`]+)`/g, "<code>$1</code>") // Inline code
+            .replace(/```([^```]+)```/g, "<pre><code>$1</code></pre>") // Code blocks
+            .replace(/>(.*?)(\n|$)/g, "<blockquote>$1</blockquote>") // Blockquotes
+            .replace(/<li>.*?<\/li>/gs, match => `<ul>${match}</ul>`); // Wrap lists
     }
 
     // ✅ Handle Send Button & Enter Key
@@ -74,10 +125,63 @@ document.addEventListener("DOMContentLoaded", function () {
     // ✅ Clear Chat on New Chat Click
     newChatBtn.addEventListener("click", function () {
         chatBox.innerHTML = "";
+        currentChatId = Date.now().toString();
+        document.getElementById('sidebar').classList.remove('sidebar-open');
     });
 
+    function showChatHistory() {
+        const historySection = document.createElement('div');
+        historySection.id = 'history-section';
+        historySection.innerHTML = `
+            <h2>Chat History</h2>
+            <div class="history-list">
+                ${Object.entries(chats).map(([id, chat]) => `
+                    <button class="history-item" data-chat-id="${id}">
+                        ${chat.title}
+                    </button>
+                `).join('')}
+            </div>
+        `;
+        
+        sidebar.querySelector('ul').style.display = 'none';
+        sidebar.appendChild(historySection);
+        
+        historySection.querySelectorAll('.history-item').forEach(item => {
+            item.addEventListener('click', () => {
+                loadChat(item.dataset.chatId);
+                closeSidebarMenu();
+            });
+        });
+        
+        const backBtn = document.createElement('button');
+        backBtn.id = 'back-to-menu';
+        backBtn.innerHTML = '← Back to Menu';
+        backBtn.onclick = () => {
+            historySection.remove();
+            sidebar.querySelector('ul').style.display = 'block';
+        };
+        historySection.insertBefore(backBtn, historySection.firstChild);
+    }
+
+    function closeSidebarMenu() {
+        sidebar.classList.remove("sidebar-open");
+        const historySection = document.getElementById('history-section');
+        if (historySection) {
+            historySection.remove();
+            sidebar.querySelector('ul').style.display = 'block';
+        }
+        setTimeout(() => {
+            sidebar.style.visibility = "hidden";
+            sidebar.style.opacity = "0";
+        }, 300);
+    }
+
+    // Add click handler for history button
+    document.getElementById('history-btn').addEventListener('click', showChatHistory);
+
     // ✅ Hamburger Menu Controls
-    menuBtn.addEventListener("click", function () {
+    menuBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
         sidebar.classList.add("sidebar-open");
         sidebar.style.visibility = "visible";
         sidebar.style.opacity = "1";
