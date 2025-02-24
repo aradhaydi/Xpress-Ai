@@ -358,6 +358,7 @@ header h1 {
     align-self: flex-end;
     max-width: 60%;
     padding: 15px 20px;
+    margin: 2px 10px;
     border-radius: 20px 20px 4px 20px;
     transform-origin: bottom right;
     font-size: 14px;
